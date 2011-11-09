@@ -5,6 +5,41 @@ import (
 	"log"
 )
 
+// Low-level method to connect to server - normal clients should not need this.
+// Use Connect() instead.
+func Dial(server string) (conn *Client, err error) {
+	nconn, err := net.Dial("tcp", server)
+	if err != nil {
+		return
+	}
+
+	conn = new(Client)
+	conn.connection = nconn
+	conn.serverName = server
+	conn.server = make(chan ServerMessage, serverMsgBufSize)
+	conn.out = conn.connection
+
+	// spawn the connection reader
+	go func() {
+		r, err := bufio.NewReaderSize(conn.connection, maxlinesize)
+		if err != nil {
+			panic(err)
+		}
+
+		line, beFalse, err := r.ReadLine()
+		for err == nil && !beFalse {
+			conn.server <- parseServerMessage(string(line))
+			line, beFalse, err = r.ReadLine()
+		}
+		if beFalse {
+			log.Fatal("Line too long")
+		} else {
+			log.Fatal(err) // TODO handle me better
+		}
+	}()
+	return
+}
+
 // Low-level method to send PASS command - normal clients should not need this.
 func (c *Client) Pass(pass string) {
 	fmt.Fprintf(c.out, "PASS %s\n", pass)
