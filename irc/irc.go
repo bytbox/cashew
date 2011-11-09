@@ -183,7 +183,7 @@ func (c Client) Nick(nick string) {
 // Listen for messages coming in and return them on the returned channel. Also
 // handles low-level information from the server correctly, making information
 // available in the Client object as appropriate.
-func (c Client) Listen() (<-chan Message) {
+func (c Client) Listen() <-chan Message {
 	ch := make(chan Message)
 	handleMessage := func(sm ServerMessage) {
 		switch sm.Code {
@@ -191,14 +191,14 @@ func (c Client) Listen() (<-chan Message) {
 			ch <- Message{
 				Kind: MSG_NOTICE,
 				From: sm.From,
-				To: sm.To,
+				To:   sm.To,
 				Text: sm.Raw[1:],
 			}
 		case "PRIVMSG":
 			ch <- Message{
 				Kind: MSG_PRIVMSG,
 				From: sm.From,
-				To: sm.To,
+				To:   sm.To,
 				Text: sm.Raw[1:],
 			}
 		case "PING":
