@@ -1,5 +1,10 @@
 package irc
 
+import (
+	"fmt"
+	"log"
+)
+
 // Low-level method to send PASS command - normal clients should not need this.
 func (c *Client) Pass(pass string) {
 	fmt.Fprintf(c.out, "PASS %s\n", pass)
