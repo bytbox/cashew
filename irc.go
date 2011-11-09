@@ -18,6 +18,9 @@ const maxlinesize = 4096
 // Maximum length of a line we output - anything else will be wrapped
 const lineLength = 80
 
+// Size of the ServerMessage buffer
+const serverMsgBufSize = 10
+
 // A message sent by the server
 type ServerMessage struct {
 	From string
@@ -53,6 +56,7 @@ func nextField(line string) (string, string, bool) {
 func parseServerMessage(line string) (m ServerMessage) {
 	m.Full = line
 	m.From, line, _ = nextField(line)
+	m.From = m.From[1:]
 	m.Code, line, _ = nextField(line)
 	m.To, line, _ = nextField(line)
 	m.Raw = line
@@ -92,7 +96,7 @@ func getUname() string {
 	if e != nil {
 		log.Print("WARNING: user.Lookupid: ", e)
 	} else {
-		uname = u.Name
+		uname = u.Username
 	}
 	return uname
 }
@@ -122,7 +126,8 @@ func Connect(serverName, nick, realName string) (Client, error) {
 	return conn, nil
 }
 
-// Low-level method to connect to server - normal clients should not need this
+// Low-level method to connect to server - normal clients should not need this.
+// Use Connect() instead.
 func Dial(server string) (conn Client, err error) {
 	nconn, err := net.Dial("tcp", server)
 	if err != nil {
@@ -131,7 +136,7 @@ func Dial(server string) (conn Client, err error) {
 
 	conn.connection = nconn
 	conn.serverName = server
-	conn.server = make(chan ServerMessage, 30)
+	conn.server = make(chan ServerMessage, serverMsgBufSize)
 	conn.out = conn.connection
 
 	// spawn the connection reader
@@ -164,10 +169,62 @@ func (c Client) User(user, host, server, name string) {
 	fmt.Fprintf(c.out, "USER %s %s %s :%s\n", user, host, server, name)
 }
 
-// Low-level method to send NICK command
+// Low-level method to send NICK command - normal clients should not need this.
 func (c Client) Nick(nick string) {
 	fmt.Fprintf(c.out, "NICK %s\n", nick)
 	c.nick = nick // TODO fix possible race condition
+}
+
+// Listen for messages coming in and return them on the returned channel. Also
+// handles low-level information from the server correctly, making information
+// available in the Client object as appropriate.
+func (c Client) Listen() (<-chan Message) {
+	ch := make(chan Message)
+	handleMessage := func(sm ServerMessage) {
+		switch sm.Code {
+		case "NOTICE":
+			ch <- Message{
+				Kind: MSG_NOTICE,
+				From: sm.From,
+				To: sm.To,
+				Text: sm.Raw[1:],
+			}
+		case "PRIVMSG":
+			ch <- Message{
+				Kind: MSG_PRIVMSG,
+				From: sm.From,
+				To: sm.To,
+				Text: sm.Raw[1:],
+			}
+		case RPL_MOTD:
+		case RPL_MOTDSTART:
+		case RPL_ENDOFMOTD:
+		case RPL_WELCOME:
+		case RPL_YOURHOST:
+		case RPL_CREATED:
+		case RPL_MYINFO:
+		case RPL_BOUNCE:
+		case RPL_LUSERCLIENT:
+		case RPL_LUSEROP:
+		case RPL_LUSERUNKNOWN:
+		case RPL_LUSERCHANNELS:
+		case RPL_LUSERME:
+		case "MODE":
+		default:
+			log.Printf("Unhandled message %s\t\t%s", sm.Code, sm.Full)
+		}
+	}
+	go func() {
+		for {
+			var m ServerMessage
+			select {
+			// TODO allow input on stdin
+			case m = <-c.server:
+				handleMessage(m)
+			}
+		}
+	}()
+	return ch
 }
 
 // Join the specified channel
@@ -175,6 +232,13 @@ func (c Client) Join(ch string) {
 	// TODO don't join until 001 is received
 	log.Print("JOIN ", ch)
 	fmt.Fprintf(c.out, "JOIN %s\n", ch)
+}
+
+// Join the specified channels
+func (c Client) JoinChannels(chs []string) {
+	for _, ch := range chs {
+		c.Join(ch)
+	}
 }
 
 // Leave the specified channel
@@ -186,4 +250,8 @@ func (c Client) Part(ch string) {
 func (c Client) Quit(msg string) {
 	log.Print("QUIT :", msg)
 	fmt.Fprintf(c.out, "QUIT :%s\n", msg)
+}
+
+func (c Client) PrivMsg(to, msg string) {
+	fmt.Fprintf(c.out, "PRIVMSG %s :%s\n", to, msg)
 }

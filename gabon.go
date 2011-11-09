@@ -8,6 +8,7 @@ import (
 var server = "irc.freenode.net:6667"
 var channels = []string{
 	//"#go-nuts",
+	"#go-bots",
 }
 
 func main() {
@@ -19,41 +20,26 @@ func main() {
 		log.Fatal("ERR: ", err)
 	}
 
-	for _, c := range channels {
-		conn.Join(c)
-	}
+	conn.JoinChannels(channels)
 
-	for {
-		var m ServerMessage
-		select {
-		// TODO allow input on stdin
-		case m = <-conn.server:
-			handleMessage(m)
+	messages := conn.Listen()
+
+	for m := range messages {
+		switch m.Kind {
+		case MSG_NOTICE:
+			log.Printf("NOTICE\t%s", m.Text)
+		case MSG_PRIVMSG:
+			handlePriv(conn, m.From, m.To, m.Text)
+		default:
+			log.Print("WARNING: unhandled message kind")
 		}
 	}
 }
 
-// TODO this should be shifted into irc.go
-func handleMessage(m ServerMessage) {
-	switch m.Code {
-	case "NOTICE":
-		log.Printf("NOTICE %s", m.Raw)
-	case "PRIVMSG":
-	case RPL_MOTD:
-	case RPL_MOTDSTART:
-	case RPL_ENDOFMOTD:
-	case RPL_WELCOME:
-	case RPL_YOURHOST:
-	case RPL_CREATED:
-	case RPL_MYINFO:
-	case RPL_BOUNCE:
-	case RPL_LUSERCLIENT:
-	case RPL_LUSEROP:
-	case RPL_LUSERUNKNOWN:
-	case RPL_LUSERCHANNELS:
-	case RPL_LUSERME:
-	case "MODE":
-	default:
-		log.Printf("Unhandled message %s\t\t%s", m.Code, m.Raw)
+func handlePriv(c Client, from, to, text string) {
+	if to[0] != '#' {
+		log.Printf("Private message from %s: %s", from, text)
+		return
 	}
+	c.PrivMsg(to, "Ditto")
 }
