@@ -1,4 +1,8 @@
+// Package irc provides an implementation of the IRC protocol compatible with
+// most modern IRC servers.
 package irc
+
+// TODO RFC-compliance
 
 import (
 	"bufio"
