@@ -39,7 +39,7 @@ func main() {
 	}
 }
 
-func handlePriv(c Client, from, to, text string) {
+func handlePriv(c *Client, from, to, text string) {
 	replyTo := to
 	if to[0] != '#' { // not sent to a channel - reply directly to user
 		replyTo = from
@@ -48,9 +48,15 @@ func handlePriv(c Client, from, to, text string) {
 		if r, _ := regexp.MatchString("gabon[,:] ", text); !r {
 			return
 		} else {
-
+			_, text, _ = nextField(text)
 		}
 	}
 	r := getReply(text)
-	c.PrivMsg(replyTo, "Hi")
+	if r != "" {
+		c.PrivMsg(replyTo, "Hi")
+	}
+}
+
+func getReply(text string) string {
+	return ""
 }
