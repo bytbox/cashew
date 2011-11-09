@@ -56,8 +56,13 @@ func nextField(line string) (string, string, bool) {
 func parseServerMessage(line string) (m ServerMessage) {
 	m.Full = line
 	m.From, line, _ = nextField(line)
-	m.From = m.From[1:]
-	m.Code, line, _ = nextField(line)
+	if m.From[0] != ':' {
+		m.Code = m.From
+		m.From = ""
+	} else {
+		m.From = m.From[1:]
+		m.Code, line, _ = nextField(line)
+	}
 	m.To, line, _ = nextField(line)
 	m.Raw = line
 	m.Fields = make([]string, 0)
@@ -196,6 +201,8 @@ func (c Client) Listen() (<-chan Message) {
 				To: sm.To,
 				Text: sm.Raw[1:],
 			}
+		case "PING":
+			fmt.Fprintf(c.out, "PONG :%s\n", sm.To)
 		case RPL_MOTD:
 		case RPL_MOTDSTART:
 		case RPL_ENDOFMOTD:
