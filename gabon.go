@@ -4,6 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
+	"os/signal"
 	"regexp"
 	"strings"
 
@@ -29,6 +31,17 @@ func main() {
 
 	messages := conn.Listen()
 
+	// catch signals
+	go func() {
+		for s := range signal.Incoming {
+			log.Print("Got signal: ", s.String())
+			// TODO part from all channels
+			conn.Quit("Going nuts!")
+			os.Exit(1)
+		}
+	}()
+
+	// TODO recover from a panic
 	for m := range messages {
 		switch m.Kind {
 		case MSG_NOTICE:
@@ -67,6 +80,18 @@ func handlePriv(c *Client, from, to, text string) {
 	}
 }
 
+type Command func(string) (string, bool)
+
+var commands = map[string]Command{
+	"learn": func(text string) (string, bool) {
+		_, _, g := nextField(text)
+		if !g {
+			return "I need more than that!", true
+		}
+		return "I would have learned if I knew how...", true
+	},
+}
+
 func getReply(text string) (string, bool) {
 	f, rest, _ := nextField(text)
 	if len(f) < 2 {
@@ -79,6 +104,13 @@ func getReply(text string) (string, bool) {
 			return f[1:] + ", " + r, false
 		}
 		return r, true
+	case '!':
+		f = f[1:]
+	}
+	// look for f in command index
+	c, ok := commands[f]
+	if ok {
+		return c(rest)
 	}
 	return "I don't understand "+f, true
 }
