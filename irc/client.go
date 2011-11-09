@@ -149,7 +149,6 @@ func (c *Client) Listen() <-chan Message {
 		for {
 			var m ServerMessage
 			select {
-			// TODO allow input on stdin
 			case m = <-c.server:
 				handleMessage(m)
 			}
