@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"regexp"
 )
 
 var server = "irc.freenode.net:6667"
@@ -37,9 +38,14 @@ func main() {
 }
 
 func handlePriv(c Client, from, to, text string) {
-	if to[0] != '#' {
-		log.Printf("Private message from %s: %s", from, text)
-		return
+	replyTo := to
+	if to[0] != '#' { // not sent to a channel - reply directly to user
+		replyTo = from
+	} else {
+		// exit if this message isn't for us. TODO match ^! ?
+		if r, _ := regexp.MatchString("gabon[,:] ", text); !r {
+			return
+		}
 	}
-	c.PrivMsg(to, "Ditto")
+	c.PrivMsg(replyTo, "Hi")
 }
