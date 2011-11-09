@@ -1,4 +1,4 @@
-package main
+package irc
 
 // Numeric replies given by the server, as listed by RFC1459.
 const (
