@@ -7,6 +7,47 @@ import (
 	"net"
 )
 
+func parseServerMessage(line string) (m ServerMessage) {
+	m.Full = line
+	m.From, line, _ = nextField(line)
+	if m.From[0] != ':' {
+		m.Code = m.From
+		m.From = ""
+	} else {
+		m.From = m.From[1:]
+		m.Code, line, _ = nextField(line)
+	}
+	m.To, line, _ = nextField(line)
+	m.Raw = line
+	m.Fields = make([]string, 0)
+
+	switch m.Code {
+	case "NOTICE":
+	case "PRIVMSG":
+		m.Fields = append(m.Fields, line[1:])
+	case RPL_BOUNCE:
+	default:
+		// fill in variable fields
+		var f string
+		f, line, b := nextField(line)
+		for b {
+			if f[0] == ':' {
+				if f[1] == '-' {
+					break
+				}
+				// read until f[len(f)-1] is a semicolon
+				for b && len(f) > 0 && f[len(f)-1] != ':' {
+					f, line, b = nextField(line)
+				}
+			} else {
+				m.Fields = append(m.Fields, f)
+			}
+			f, line, b = nextField(line)
+		}
+	}
+	return
+}
+
 // Low-level method to connect to server - normal clients should not need this.
 // Use Connect() instead.
 func Dial(server string) (conn *Client, err error) {
