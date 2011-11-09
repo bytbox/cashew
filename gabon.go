@@ -2,8 +2,10 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"regexp"
+	"strings"
 
 	. "github.com/bytbox/gabon/irc"
 )
@@ -32,11 +34,16 @@ func main() {
 		case MSG_NOTICE:
 			log.Printf("NOTICE\t%s", m.Text)
 		case MSG_PRIVMSG:
-			handlePriv(conn, m.From, m.To, m.Text)
+			handlePriv(conn, getNick(m.From), m.To, m.Text)
 		default:
 			log.Print("WARNING: unhandled message kind")
 		}
 	}
+}
+
+func getNick(s string) string {
+	a := strings.SplitN(s, "!", 2)
+	return a[0]
 }
 
 func handlePriv(c *Client, from, to, text string) {
@@ -51,12 +58,27 @@ func handlePriv(c *Client, from, to, text string) {
 			_, text, _ = nextField(text)
 		}
 	}
-	r := getReply(text)
+	r, e := getReply(text)
 	if r != "" {
-		c.PrivMsg(replyTo, "Hi")
+		if e {
+			r = fmt.Sprintf("%s, %s", from, r)
+		}
+		c.PrivMsg(replyTo, r)
 	}
 }
 
-func getReply(text string) string {
-	return ""
+func getReply(text string) (string, bool) {
+	f, rest, _ := nextField(text)
+	if len(f) < 2 {
+		return "", true
+	}
+	switch f[0] {
+	case '@':
+		r, e := getReply(rest)
+		if !e {
+			return f[1:] + ", " + r, false
+		}
+		return r, true
+	}
+	return "I don't understand "+f, true
 }
