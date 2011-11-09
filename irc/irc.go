@@ -10,8 +10,6 @@ import (
 	"io"
 	"log"
 	"net"
-	"os"
-	"os/user"
 )
 
 // Size of internal buffer for reading. 4kB should be enough to cover even the
@@ -87,31 +85,6 @@ func parseServerMessage(line string) (m ServerMessage) {
 		}
 	}
 	return
-}
-
-func getUname() string {
-	uid := os.Getuid()
-	uname := "go"
-	u, e := user.LookupId(uid)
-	if e != nil {
-		log.Print("WARNING: user.Lookupid: ", e)
-	} else {
-		uname = u.Username
-	}
-	return uname
-}
-
-func getHostname() string {
-	n, e := os.Hostname()
-	if e != nil {
-		log.Print("WARNING: os.Hostname: ", e)
-		n = "*"
-	}
-	return n
-}
-
-func getServername() string {
-	return "*"
 }
 
 func Connect(serverName, nick, realName string) (*Client, error) {
