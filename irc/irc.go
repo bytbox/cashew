@@ -139,6 +139,7 @@ func Dial(server string) (conn *Client, err error) {
 		return
 	}
 
+	conn = new(Client)
 	conn.connection = nconn
 	conn.serverName = server
 	conn.server = make(chan ServerMessage, serverMsgBufSize)
