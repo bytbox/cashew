@@ -119,7 +119,7 @@ func getServername() string {
 	return "*"
 }
 
-func Connect(serverName, nick, realName string) (Client, error) {
+func Connect(serverName, nick, realName string) (*Client, error) {
 	conn, err := Dial(serverName)
 	if err != nil {
 		return conn, err
@@ -133,7 +133,7 @@ func Connect(serverName, nick, realName string) (Client, error) {
 
 // Low-level method to connect to server - normal clients should not need this.
 // Use Connect() instead.
-func Dial(server string) (conn Client, err error) {
+func Dial(server string) (conn *Client, err error) {
 	nconn, err := net.Dial("tcp", server)
 	if err != nil {
 		return
@@ -165,17 +165,17 @@ func Dial(server string) (conn Client, err error) {
 	return
 }
 
-func (c Client) Pass(pass string) {
+func (c *Client) Pass(pass string) {
 	fmt.Fprintf(c.out, "PASS %s\n", pass)
 }
 
 // Low-level method to send USER command - normal clients should not need this
-func (c Client) User(user, host, server, name string) {
+func (c *Client) User(user, host, server, name string) {
 	fmt.Fprintf(c.out, "USER %s %s %s :%s\n", user, host, server, name)
 }
 
 // Low-level method to send NICK command - normal clients should not need this.
-func (c Client) Nick(nick string) {
+func (c *Client) Nick(nick string) {
 	fmt.Fprintf(c.out, "NICK %s\n", nick)
 	c.nick = nick // TODO fix possible race condition
 }
@@ -183,7 +183,7 @@ func (c Client) Nick(nick string) {
 // Listen for messages coming in and return them on the returned channel. Also
 // handles low-level information from the server correctly, making information
 // available in the Client object as appropriate.
-func (c Client) Listen() <-chan Message {
+func (c *Client) Listen() <-chan Message {
 	ch := make(chan Message)
 	handleMessage := func(sm ServerMessage) {
 		switch sm.Code {
@@ -235,30 +235,30 @@ func (c Client) Listen() <-chan Message {
 }
 
 // Join the specified channel
-func (c Client) Join(ch string) {
+func (c *Client) Join(ch string) {
 	// TODO don't join until 001 is received
 	log.Print("JOIN ", ch)
 	fmt.Fprintf(c.out, "JOIN %s\n", ch)
 }
 
 // Join the specified channels
-func (c Client) JoinChannels(chs []string) {
+func (c *Client) JoinChannels(chs []string) {
 	for _, ch := range chs {
 		c.Join(ch)
 	}
 }
 
 // Leave the specified channel
-func (c Client) Part(ch string) {
+func (c *Client) Part(ch string) {
 	log.Print("PART ", ch)
 	fmt.Fprintf(c.out, "PART %s\n", ch)
 }
 
-func (c Client) Quit(msg string) {
+func (c *Client) Quit(msg string) {
 	log.Print("QUIT :", msg)
 	fmt.Fprintf(c.out, "QUIT :%s\n", msg)
 }
 
-func (c Client) PrivMsg(to, msg string) {
+func (c *Client) PrivMsg(to, msg string) {
 	fmt.Fprintf(c.out, "PRIVMSG %s :%s\n", to, msg)
 }

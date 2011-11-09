@@ -4,6 +4,8 @@ import (
 	"flag"
 	"log"
 	"regexp"
+
+	. "github.com/bytbox/gabon/irc"
 )
 
 var server = "irc.freenode.net:6667"
@@ -45,7 +47,10 @@ func handlePriv(c Client, from, to, text string) {
 		// exit if this message isn't for us. TODO match ^! ?
 		if r, _ := regexp.MatchString("gabon[,:] ", text); !r {
 			return
+		} else {
+
 		}
 	}
+	r := getReply(text)
 	c.PrivMsg(replyTo, "Hi")
 }
