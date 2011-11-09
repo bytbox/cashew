@@ -1,5 +1,9 @@
 package irc
 
+import (
+	"strings"
+)
+
 func nextField(line string) (string, string, bool) {
 	fs := strings.SplitN(line, " ", 2)
 	if len(fs) > 1 {

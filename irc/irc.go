@@ -12,7 +12,6 @@ import (
 	"net"
 	"os"
 	"os/user"
-	"strings"
 )
 
 // Size of internal buffer for reading. 4kB should be enough to cover even the
