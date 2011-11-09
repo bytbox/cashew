@@ -1,8 +1,10 @@
 package irc
 
 import (
+	"bufio"
 	"fmt"
 	"log"
+	"net"
 )
 
 // Low-level method to connect to server - normal clients should not need this.

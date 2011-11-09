@@ -1,7 +1,6 @@
 package irc
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"log"
