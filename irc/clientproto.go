@@ -99,7 +99,6 @@ func (c *Client) Nick(nick string) {
 	c.nick = nick // TODO fix possible race condition
 }
 
-
 // Low-level method to join the specified channel. This does not modify the
 // Client's internal channel tracking, and so should not be used by most
 // clients.
