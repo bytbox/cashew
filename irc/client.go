@@ -2,17 +2,14 @@ package irc
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"net"
 )
 
 type Client struct {
-	connection net.Conn
+	net.Conn
 	serverName string
-	nick       string
 	server     chan ServerMessage
-	out        io.Writer
 }
 
 func Connect(serverName, nick, realName string) (*Client, error) {
@@ -49,7 +46,7 @@ func (c *Client) Listen() <-chan Message {
 				Text: sm.Raw[1:],
 			}
 		case "PING":
-			fmt.Fprintf(c.out, "PONG :%s\n", sm.To)
+			fmt.Fprintf(c, "PONG :%s\n", sm.To)
 		case RPL_MOTD:
 		case RPL_MOTDSTART:
 		case RPL_ENDOFMOTD:
