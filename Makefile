@@ -1,7 +1,7 @@
 include ${GOROOT}/src/Make.inc
 
-TARG = gabon
-GOFILES = gabon.go util.go
+TARG = cashew
+GOFILES = cashew.go util.go
 
 include ${GOROOT}/src/Make.cmd
 

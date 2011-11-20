@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	. "github.com/bytbox/gabon/irc"
+	. "github.com/bytbox/cashew/irc"
 )
 
 var server = "irc.freenode.net:6667"
@@ -22,7 +22,7 @@ func main() {
 	flag.Parse()
 
 	log.Printf("Connecting to %s", server)
-	conn, err := Connect(server, "gabon", "The Go Nut")
+	conn, err := Connect(server, "cashew", "The Go Nut")
 	if err != nil {
 		log.Fatal("ERR: ", err)
 	}
@@ -65,7 +65,7 @@ func handlePriv(c *Client, from, to, text string) {
 		replyTo = from
 	} else {
 		// exit if this message isn't for us. TODO match ^! ?
-		if r, _ := regexp.MatchString("gabon[,:] ", text); !r {
+		if r, _ := regexp.MatchString("cashew[,:] ", text); !r {
 			return
 		} else {
 			_, text, _ = nextField(text)
