@@ -22,7 +22,7 @@ func main() {
 	flag.Parse()
 
 	log.Printf("Connecting to %s", server)
-	conn, err := Connect(server, "cashew", "The Go Nut")
+	conn, err := Connect(server, "cashu", "The Go Nut")
 	if err != nil {
 		log.Fatal("ERR: ", err)
 	}
